@@ -1,0 +1,30 @@
+Starting the emulator:
+
+To start the emulator double click the icon.
+
+
+Entering code:
+
+The emulator reads code entered in hexadecimal.
+Code is typed into the text entry panel on the left hand side of the user interface.
+Clicking anywhere within the text entry panel will select it and code can then be typed in.
+
+
+Loading a program:
+
+Clicking the Load button allows saved code to loaded.
+Programs can be loaded in Motorola's S-Record format.
+
+
+Modifying memory:
+
+Once code has been typed in it can be loaded into memory by clicking the Modify Memory button. 
+This will bring up a requestor asking for a memory address to be specified.
+
+
+Running code:
+
+Once code has been loaded into a memory address, clicking the Run button will run the code from that address.
+
+
+

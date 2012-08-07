@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusListener;
@@ -10,6 +11,7 @@ import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -23,6 +25,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 
 /**
  * Defines a GUI that displays details of the emulator and contains buttons
@@ -66,7 +69,7 @@ public class EmuGUI extends JFrame implements ActionListener {
 	private UserGuide guideWindow;
 
 	/** An instance of the Processor class */
-	private ProcessorLoop proc;
+	private Processor proc;
 
 	/** An instance of the S_Record class */
 	private S_Record sRec;
@@ -75,7 +78,7 @@ public class EmuGUI extends JFrame implements ActionListener {
 	private final int MEM_LOCATIONS = 65536;
 
 	/** String representing memory address to modify */
-	private String addressToModify, s;
+	private String addressToModify;
 
 	/** Integers representing the OpCode and Address */
 	private int opCode, address, memAddress;
@@ -101,6 +104,12 @@ public class EmuGUI extends JFrame implements ActionListener {
 		setSize(1024, 680);
 		setLocation(10, 0);
 
+		// layoutTop();
+		layoutRight();
+		layoutLeft();
+		layoutBottom();
+		layoutCenter();
+
 		// Menu bar
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -121,16 +130,8 @@ public class EmuGUI extends JFrame implements ActionListener {
 		helpMenu.add(openUserGuide);
 		openUserGuide.addActionListener(this);
 
-		// initEmu();
+		initEmu();
 		// updateDisplay();
-		// layoutTop();
-		layoutRight();
-		layoutLeft(s);
-		layoutBottom();
-
-		instructionsClass = new Instructions();
-
-		layoutDisplay();
 	}
 
 	/**
@@ -139,10 +140,10 @@ public class EmuGUI extends JFrame implements ActionListener {
 	public void initEmu() {
 
 		// create new memory object
-		// mem = new Memory();
+		mem = new Memory();
 
 		// create new memory array
-		// memArray = new MemoryArray();
+		memArray = new MemoryArray();
 	}
 
 	/**
@@ -353,46 +354,19 @@ public class EmuGUI extends JFrame implements ActionListener {
 
 	/**
 	 * adds left hand side elements to left of GUI
-	 * @param s - a string representing machine code passed from the S record class
 	 */
-	public void layoutLeft(String s) {
+	public void layoutLeft() {
 		JPanel left = new JPanel();
 		left.setBackground(new java.awt.Color(200, 244, 255));
 		add(left, BorderLayout.WEST);
 		codeIn = new JTextArea(32, 38);
 		codeIn.setBorder(javax.swing.BorderFactory
 				.createTitledBorder("Machine Code Area"));
-		codeIn.setText(s);
 		JScrollPane codeScroll = new JScrollPane(codeIn);
 		left.add(codeIn);
 		add(codeScroll, BorderLayout.CENTER);
 		codeIn.setFont(new Font("Courier", Font.PLAIN, 14));
 		codeIn.addFocusListener(focusListener);
-	}
-
-	/**
-	 * adds a central display area for memory condition
-	 */
-	public void layoutDisplay() {
-		JPanel displayPanel = new JPanel();
-		displayPanel.setBackground(Color.black);
-		add(displayPanel, BorderLayout.CENTER);
-
-		displayOutput = new JTextArea(32, 38);
-		displayOutput.setBorder(javax.swing.BorderFactory
-				.createTitledBorder("Memory Display Area"));
-		JScrollPane memScroll = new JScrollPane(displayOutput);
-		displayPanel.add(memScroll);
-		add(memScroll, BorderLayout.CENTER);
-		displayOutput.setFont(new Font("Courier", Font.PLAIN, 14));
-		displayOutput.addFocusListener(focusListener);
-
-		displayOutput.setEditable(false);
-
-		// mList = new StringBuilder();
-		mList = instructionsClass.memDispalyString();
-
-		displayOutput.setText(mList.toString());
 	}
 
 	/**
@@ -439,29 +413,45 @@ public class EmuGUI extends JFrame implements ActionListener {
 	/**
 	 * method to add central elements to GUI
 	 */
-	// public void layoutCenter() {
-	// JPanel central = new JPanel();
-	// central.setBackground(Color.BLUE);
-	// add(central, BorderLayout.CENTER);
-	//
-	// // JTabbedPane for switching between Memory, Display and Reference
-	// tabs = new JTabbedPane();
-	// this.add(tabs);
-	//
-	// // memory tab
-	// mList = new StringBuilder();
-	// mList = memArray.getMemroyDisplayString();
-	//
-	// // updateDisplay();
-	//
-	// JComponent memTab = makeTextPanel(mList.toString());
-	// tabs.addTab("Memory", new JScrollPane(memTab));
-	// JComponent displayTab =
-	// makeTextPanel("\nOutput \n of\n  emulator\n   operations\n   to\n    be\n      Displayed\n       Here");
-	// tabs.addTab("Display", displayTab);
-	// JComponent refTab = makeTextPanel("Reference");
-	// tabs.addTab("Reference", refTab);
-	// }
+	public void layoutCenter() {
+		JPanel central = new JPanel();
+		central.setBackground(Color.BLUE);
+		add(central, BorderLayout.CENTER);
+
+		// JTabbedPane for switching between Memory, Display and Reference
+		tabs = new JTabbedPane();
+		this.add(tabs);
+
+		// memory tab
+		mList = new StringBuilder();
+		memLocList = new Memory[MEM_LOCATIONS];
+		mem = new Memory();
+		for (int i = 0; i < memLocList.length; i++) {
+			memLocList[i] = mem;
+			memLocList[i].setOpCode(00);
+
+			// reset vector at addresses $FFFE & $FFFF
+			resetVect1 = new Memory();
+			resetVect1.setOpCode(160);
+			memLocList[65534] = resetVect1;
+			resetVect2 = new Memory();
+			resetVect2.setOpCode(39);
+			memLocList[65535] = resetVect2;
+
+			mList.append(String.format("%10s %04x %10s %6x", "Address:   ", i,
+					"Value:  ", memLocList[i].getOpCode()));
+			mList.append("\n");
+		}
+
+		// updateDisplay();
+
+		JComponent memTab = makeTextPanel(mList.toString());
+		tabs.addTab("Memory", new JScrollPane(memTab));
+		JComponent displayTab = makeTextPanel("\nOutput \n of\n  emulator\n   operations\n   to\n    be\n      Displayed\n       Here");
+		tabs.addTab("Display", displayTab);
+		JComponent refTab = makeTextPanel("Reference");
+		tabs.addTab("Reference", refTab);
+	}
 
 	/**
 	 * Method to set central panel text
@@ -469,17 +459,17 @@ public class EmuGUI extends JFrame implements ActionListener {
 	 * @param t - the string for display
 	 * @return - the panel
 	 */
-	// protected JComponent makeTextPanel(String t) {
-	// text = t;
-	// JPanel panel = new JPanel(false);
-	// JTextPane filler = new JTextPane();
-	// filler.setFont(new Font("Courier", Font.PLAIN, 14));
-	// filler.setText(text);
-	// filler.setAlignmentX(LEFT_ALIGNMENT);
-	// panel.setLayout(new GridLayout(1, 1));
-	// panel.add(filler);
-	// return panel;
-	// }
+	protected JComponent makeTextPanel(String t) {
+		text = t;
+		JPanel panel = new JPanel(false);
+		JTextPane filler = new JTextPane();
+		filler.setFont(new Font("Courier", Font.PLAIN, 14));
+		filler.setText(text);
+		filler.setAlignmentX(LEFT_ALIGNMENT);
+		panel.setLayout(new GridLayout(1, 1));
+		panel.add(filler);
+		return panel;
+	}
 
 	/**
 	 * method to update the display
@@ -528,6 +518,17 @@ public class EmuGUI extends JFrame implements ActionListener {
 			System.out.println("address as hex String = " + addressToModify
 					+ "\naddress as decimal int = " + memAddress);
 
+			// declare new memory array and memory object
+			MemoryArray MA = new MemoryArray();
+			Memory mem = new Memory();
+
+			// set the memory address and OpCode
+			mem.setAddress(memAddress);
+			// mem.setOpCode(opCode);
+
+			// pass entered memory location to Memory array as memory object
+			MA.addMemoryObjects(memAddress, mem);
+
 			processInput(memAddress);
 
 			// enable run and save buttons
@@ -536,12 +537,10 @@ public class EmuGUI extends JFrame implements ActionListener {
 
 			// call update display method to refresh the GUI
 			// updateDisplay(memAddress);
-			layoutDisplay(); // TODO doesn't work
 
 		} else
 			JOptionPane.showMessageDialog(clearButton,
 					"Sorry, not a valid address.");
-
 	}
 
 	/**
@@ -552,11 +551,10 @@ public class EmuGUI extends JFrame implements ActionListener {
 	public void processInput(int addr) {
 
 		String enteredCode = codeIn.getText();
-		// System.out.println("Entered Code:\n" + enteredCode);
+		System.out.println("Entered Code:\n" + enteredCode);
 
 		// pass entered code as String parameter to Instructions class
-		instructionsClass.instructionsIn(enteredCode, addr);
-
+		Instructions instructionsClass = new Instructions(enteredCode, addr);
 	}
 
 	/**
@@ -583,11 +581,6 @@ public class EmuGUI extends JFrame implements ActionListener {
 
 			resultLabel.setText("You chose to open this file: "
 					+ file.getName());
-
-			// enable run and save buttons
-			runButton.setEnabled(true);
-			saveButton.setEnabled(true);
-
 		} else
 			resultLabel.setText("You did not choose a file to open");
 	}
@@ -599,11 +592,8 @@ public class EmuGUI extends JFrame implements ActionListener {
 		// start main emulator loop
 		System.out.println("\nStart running from hex address "
 				+ addressToModify + " or decimal address " + memAddress);
-		// proc = new ProcessorLoop();
+		proc = new Processor(memAddress);
 
-		// proc.procLoop(memAddress);
-		// proc.procLoop();
-		instructionsClass.runLoop();
 	}
 
 	/**

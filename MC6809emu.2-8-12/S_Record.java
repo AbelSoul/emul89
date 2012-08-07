@@ -48,17 +48,11 @@ public class S_Record {
 								// data
 	private final int chunkLength = 2; // the length of each chunk of code
 
-	/** instance of GUI class */
-	private EmuGUI gui;
-
 	/** This method takes an input S-Record file and separates into lines
 	 * 
 	 * @param fileName - the name of the file
 	 */
 	public void readRecord(File fileName) {
-
-		// StringBuilder object for displaying machine code
-		// StringBuilder sCode = new StringBuilder();
 
 		// create file reader
 		try {
@@ -117,7 +111,6 @@ public class S_Record {
 		// create new memory object and memory array and instructions objects
 		MemoryArray MA = new MemoryArray();
 		Memory mem = new Memory();
-		// gui = new EmuGUI();
 
 		// String builder for S0 output string
 		StringBuilder sb = new StringBuilder();
@@ -141,10 +134,6 @@ public class S_Record {
 				sb.append((char) decimal);
 			}
 			System.out.println("\nS0 info in ASCII = " + sb.toString() + "\n");
-			String s = sb.toString();
-
-			// pass to gui for display
-			// gui.layoutLeft(s);
 
 			// handle checksum TODO
 
@@ -167,8 +156,22 @@ public class S_Record {
 			String dataString = record.substring(mN, (record.length() - 2));
 
 			// pass data string as String parameter to Instructions class
-			// Instructions instructionsClass = new Instructions(dataString,
-			// s1Address);
+			Instructions instructionsClass = new Instructions(dataString,
+					s1Address);
+
+			// traverse data string and split into 2 digit chunks - no need,
+			// already done in instructions class
+			// for (int i = 0; i < dataString.length(); i += chunkLength) {
+			// String chunk = dataString.substring(i,
+			// Math.min(dataString.length(), i + chunkLength));
+			// System.out.println("data string chunk " + (i + 2) / 2 + " = "
+			// + chunk);
+
+			// convert to decimal
+			// int decimal = Integer.parseInt(chunk, 16);
+			// }
+			// set address in memory object
+			// mem.setAddress(s1Address);
 		}
 
 		// Check if S2 record (memory loadable data) - not used in MC6809 as 3
